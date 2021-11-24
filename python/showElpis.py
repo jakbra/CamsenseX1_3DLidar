@@ -1,9 +1,6 @@
 import matplotlib.pyplot as plt
 import csv
-import pandas as pd
-import math
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 
 
@@ -82,10 +79,7 @@ tmpz = []
 mu =[]
 
 
-#df = pd.read_csv('dataZvezna.csv')
-#df.to_csv('dataCleanZvezna.csv', index=False)
-
-with open('data7Clean.csv', 'r') as csvfile:
+with open('data.csv', 'r') as csvfile:
     datareader = csv.reader(csvfile,delimiter=',')
     for row in datareader:
         x.append(int(row[0]))
@@ -120,6 +114,8 @@ plt.xlabel('x')
 plt.ylabel('y')
 
 for i in range(len(x)):
+
+    #Za lepši prikaz odstranimo točki, ki so zelo oddaljene
     if abs(x[i]) > 4000:
         x[i] = 0
         y[i] = 0

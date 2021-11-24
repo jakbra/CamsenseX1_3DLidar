@@ -28,7 +28,7 @@ tmpz = []
 mu =[]
 
 
-with open('data7Clean.csv', 'r') as csvfile:
+with open('data.csv', 'r') as csvfile:
     datareader = csv.reader(csvfile,delimiter=',')
     for row in datareader:
         x.append(int(float(row[0])))
@@ -51,7 +51,7 @@ with open('data7Clean.csv', 'r') as csvfile:
         tmpz = []
 
 
-
+#Za lepši prikaz odstranimo točki, ki so zelo oddaljene
 for i in range(len(x)):
     if abs(x[i]) > 4000:
         x[i] = 0
@@ -82,11 +82,11 @@ plt.ylabel('y')
 
 color = list()
 
+
 for elem in z:
     color.append(-elem)
 
 ax.scatter3D(x, y, z, c = color,  cmap='winter')
-#plt.title("3D PLOT")
 
 
 plt.show()
