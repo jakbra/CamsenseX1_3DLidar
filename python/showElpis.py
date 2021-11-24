@@ -3,6 +3,7 @@ import csv
 import numpy as np
 from matplotlib import cm
 
+"""Po metodi: https://github.com/CircusMonkey/covariance-ellipsoid"""
 
 def get_cov_ellipsoid(cov, mu=np.zeros((3)), nstd=3):
     """
