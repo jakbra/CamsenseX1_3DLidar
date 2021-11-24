@@ -27,7 +27,7 @@ using namespace std;
 HardwareSerial HardwareLaser(2);
 
 //Buttons
-const int endSwitch = 23;
+const int button = 23;
 
 // Motor A
 int MotorPin1 = 18;                 
@@ -490,7 +490,7 @@ void setup() {
   HardwareLaser.begin(115200, SERIAL_8N1, LIDAR_TX, -1);
 
   pinMode(PIN_BUTTON, INPUT_PULLDOWN);
-  pinMode(endSwitch, INPUT_PULLDOWN);
+  pinMode(button, INPUT_PULLDOWN);
   pinMode(MotorPin1, OUTPUT);
   pinMode(MotorPin2, OUTPUT);
   pinMode(enable, OUTPUT);
@@ -519,7 +519,7 @@ void loop(){
 
   button_state = digitalRead(button);
 
- if(endSwitch_state == LOW){ // V mojem primeru uporabljam NC stikalo
+ if(button_state == LOW){ // V mojem primeru uporabljam NC stikalo
       measure = true;
     }
 
