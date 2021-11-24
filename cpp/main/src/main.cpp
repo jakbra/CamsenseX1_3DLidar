@@ -227,7 +227,7 @@ void calcXY(uint16_t* degrees, uint16_t* distances){
   dataCounter = dataCounter + 1;
 
   for(i=0;i<8;i++){
-    
+
       if(distances[i]<=525){
         int16_t e;
         e = -0.281;
@@ -514,10 +514,10 @@ void loop(){
 
   static measureState_t measureState;
 
-  int endSwitch_state = 1;
+  int button_state = 1;
   dutyCycle = 100;
 
-  endSwitch_state = digitalRead(endSwitch);
+  button_state = digitalRead(button);
 
  if(endSwitch_state == LOW){ // V mojem primeru uporabljam NC stikalo
       measure = true;
