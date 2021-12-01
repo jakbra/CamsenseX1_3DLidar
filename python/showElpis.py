@@ -82,6 +82,10 @@ mu =[]
 
 with open('data.csv', 'r') as csvfile:
     datareader = csv.reader(csvfile,delimiter=',')
+
+    # Preberemo csv datoteko
+    # dobimo sezname x,y,z
+    # ter seznam členov kovariančne matrike po vrsticah Ex,Ey,Ez
     for row in datareader:
         x.append(int(row[0]))
         y.append(int(row[1]))
@@ -102,9 +106,9 @@ with open('data.csv', 'r') as csvfile:
         tmpy = []
         tmpz = []
 
+# Uporabimo pri colors = cm.winter(norm(z[i])) za prikaz gradienta glede na z-koordinato
+# plt.Normalize(min_z, max_z)
 norm = plt.Normalize(-2998, 855)
-
-
 
 # Setup the plot
 fig = plt.figure()
@@ -116,7 +120,7 @@ plt.ylabel('y')
 
 for i in range(len(x)):
 
-    #Za lepši prikaz odstranimo točki, ki so zelo oddaljene
+    #Za lepši prikaz odstranimo točke, ki so zelo oddaljene
     if abs(x[i]) > 4000:
         x[i] = 0
         y[i] = 0

@@ -21,20 +21,23 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////////////
 // HARDWARE
 
-//Setting lindar
-#define LIDAR_TX 27
+//Setting LIDAR
+#define LIDAR_TX 27 //LIDAR serial povezava na pinu 27
 #define _USE_MATH_DEFINES
 HardwareSerial HardwareLaser(2);
 
 //Buttons
 const int button = 23;
 
-// Motor A
+// Motor
+// Izhodi, ki se povežejo na H-mostič (Levo, desno, hitrost)
 int MotorPin1 = 18;                 
 int MotorPin2 = 19;                   
 int enable = 14;
 
 // Encoder
+// Ustvarimo objekt "encoder"
+// error in angleCounter, globane spemenljivke za regulacijo zasuka motorja
 ESP32Encoder encoder;
 int error;
 int32_t angleCounter;
@@ -42,6 +45,7 @@ int32_t angleCounter;
 
 //////////////////////////////////////////////////////////////////////////////////
 // Setting PWM properties
+// Spremenljike, ki definirajo lastnosti PWM pina, določenega v void setup()
 
 const int freq = 30000;
 const int pwmChannel = 0;
@@ -49,7 +53,8 @@ const int resolution = 8;
 int dutyCycle = 60;
 
 //////////////////////////////////////////////////////////////////////////////////
-//Timer
+// Timer interrupt
+// Narejen po primeru "https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/"
 
 hw_timer_t * timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
@@ -58,14 +63,16 @@ portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 //////////////////////////////////////////////////////////////////////////////////
 // PAKETI
 
+// Header: 4 bajti, ki so vedno na začetku paketa
 const uint8_t header[] = { 0x55, 0xaa, 0x03, 0x08 };
 
+// Struktura paketa
 typedef struct {
   uint8_t header0;
   uint8_t header1;
   uint8_t header2;
   uint8_t header3;
-  uint16_t rotation_speed; //rpm*64
+  uint16_t rotation_speed; // rpm*64
   uint16_t angle_begin; // (angle+640)*64
   uint16_t distance_0;
   uint8_t reserved_0;
@@ -87,6 +94,7 @@ typedef struct {
   uint16_t crc;
 } __attribute__((packed)) LidarPacket_t;
 
+// Stanja, ki se uporabljajo pri razčljenjevanju paketov
 typedef enum
 {
   STATE_WAIT_HEADER = 0,
@@ -97,7 +105,7 @@ typedef enum
 
 //////////////////////////////////////////////////////////////////////////////////
 // State variables
-
+// Spremenljivke definirajo stanje programa (merimo || mirujemo)
 volatile int flag = 0;
 volatile bool startMove = false;
 
@@ -113,6 +121,9 @@ int dataCounter = 0;
 
 //////////////////////////////////////////////////////////////////////////////////
 // covert funkcije
+
+// Ker je zapis začetnega in končnega kota v bajtih oblike: (angle+640)*64
+// ga s to funkcijo pretvorimo
 uint16_t convertDegree(uint16_t input)
 {
   
@@ -120,11 +131,15 @@ uint16_t convertDegree(uint16_t input)
   
 }
 
+// Ker je zapis rotacijske hitrosti v bajtih oblike: rpm*64
+// ga s to funkcijo pretvorimo
 uint16_t convertSpeed(uint16_t input)
 {
   return input / 64;
 }
 
+// Funkcija vzame začetni in končni kot, ter razliko razdeli na 8 enakih delov,
+// dele zapiše v seznam "map", upošteva se tudi situacijo ko je sta kota na prelomu kroga (360 -> 0 stopinj)
 void remapDegrees(uint16_t minAngle, uint16_t maxAngle, uint16_t *map)
 {
   int16_t delta = maxAngle - minAngle;
@@ -146,6 +161,15 @@ void remapDegrees(uint16_t minAngle, uint16_t maxAngle, uint16_t *map)
 
 //////////////////////////////////////////////////////////////////////////////////
 // Timer interupt funkcija
+// Narejen po primeru "https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/"
+// Funkcija, ki se izvaja ob stalnih časovnih intervalih, v tem primeru je to premikanje motorja med dvema skrajnima legama.
+// 
+// Smer vrtenja določa spremenljivka "flag" -> case 0: željeni kot = 90; case 1: željeni kot = 0 -> 
+// ko je error = 0 se zamenjata
+// 
+// Ker želimo, da se motor premika samo ko smo v fazi merjenja je premikanje pogojeno z "startMove"
+
+Ker želimo da se motor vrti 
 void IRAM_ATTR onTimer() {
   portENTER_CRITICAL_ISR(&timerMux);
   int ref;
@@ -155,20 +179,24 @@ void IRAM_ATTR onTimer() {
   case 0:
   ref = 90;
 
-  error = ref - (int32_t)encoder.getCount();
 
+  error = ref - (int32_t)encoder.getCount(); // (int32_t)encoder.getCount() nam vrne število preštetih pulzov enkoderja
+
+  // Vrtenje CW
   if (error > 0){
 
     ledcWrite(pwmChannel, dutyCycle); 
     digitalWrite(MotorPin1, LOW);
     digitalWrite(MotorPin2, HIGH);
   }
+  // Vrtenje CCW 
   else if (error < 0){
 
     ledcWrite(pwmChannel, dutyCycle); 
     digitalWrite(MotorPin1, HIGH);
     digitalWrite(MotorPin2, LOW);
   }
+  // Mirovanje & spremeni se "flag"
   else if (error == 0){
     ledcWrite(pwmChannel, dutyCycle);
     digitalWrite(MotorPin1, HIGH);
@@ -177,8 +205,9 @@ void IRAM_ATTR onTimer() {
  
   }
     break;
-  case 1:
 
+  // Enaka zgodba, zeljen zasuk je sedaj 0 stopinj
+  case 1:
   ref = 0;
 
   error = ref - (int32_t)encoder.getCount();
@@ -218,28 +247,40 @@ void IRAM_ATTR onTimer() {
 // pošiljanje po serijskem kanalu
 
 void calcXY(uint16_t* degrees, uint16_t* distances){
+
+
 	int8_t i;
   int16_t x, y, z;
+  int16_t theta;
+
+  // Variance določene med evalvacijo
   int16_t var_phi = 0.563;
   int16_t var_theta = 0.563;
-  int16_t theta;
   int16_t var_r = 0.8842;
+
+  // Števec prebranih paketov, željeno število se določi v void loop()
   dataCounter = dataCounter + 1;
+
 
   for(i=0;i<8;i++){
 
+      // Sledeči "if" stavki, določijo varianco (var_r) in pristranskost (e) meritve razdalje, na podlagi linerane 
+      // interpolacije med izmerjenimi vrednostmi. Enačbe premic so bile izračunane ročno
+
+      // Meritvam manjšim od 525 se določi začetna pristraskost in varianca
       if(distances[i]<=525){
         int16_t e;
         e = -0.281;
-        distances[i] = distances[i]-e;
+        distances[i] = distances[i]-e; //Pristranskost odčtejemo od meritve
         var_r = 0.8842;
       }
 
+
       if(distances[i]<=1010){
         int16_t e;
-        e = -0.0014*distances[i] + 0.4720;
-        distances[i] = distances[i]-e;
-        var_r = 0.0058*distances[i] - 2.1505;
+        e = -0.0014*distances[i] + 0.4720; //Enačba premice
+        distances[i] = distances[i]-e; //Pristranskost odčtejemo od meritve
+        var_r = 0.0058*distances[i] - 2.1505; //Enačba premice
       }
 
       if(distances[i]<=1490){
@@ -313,9 +354,11 @@ void calcXY(uint16_t* degrees, uint16_t* distances){
 
       }
 
-      theta = (int32_t)encoder.getCount() * 0.66; //15 pulzov je 10 stopinj 10/15 = 0,66
+      // Kot nagiba theta
+      // 15 pulzov je 10 stopinj 10/15 = 0,66
+      theta = (int32_t)encoder.getCount() * 0.66; 
     
-
+      // Izračun členoc kovariančne matrike
       int E11 = var_phi*sq(distances[i])*sq(-sin((1.f * PI * degrees[i]) / 180)) + var_r*sq(cos((1.f * PI * degrees[i]) / 180));
       int E12 = - var_phi*sin((1.f * PI * degrees[i]) / 180)*cos((1.f * PI * degrees[i]) / 180) + var_r*sin((1.f * PI * degrees[i]) / 180)*cos((1.f * PI * degrees[i]) / 180);
       int E13 = var_r*sin((1.f * PI * theta) / 180)*cos((1.f * PI * degrees[i]) / 180);
@@ -328,11 +371,12 @@ void calcXY(uint16_t* degrees, uint16_t* distances){
       int E32 = var_r*sin((1.f * PI * theta) / 180)*sin((1.f * PI * degrees[i]) / 180);
       int E33 = var_theta*sq(distances[i])*sq(cos((1.f * PI * theta) / 180)) + var_r*sq(sin((1.f * PI * theta) / 180));
 
-
+      // Izračun x,y in z koordinat
       x = cos((1.f * PI * degrees[i]) / 180) * (distances[i]);
       y = sin((1.f * PI * degrees[i]) / 180) * (distances[i]);
       z = -sin((1.f * PI * theta) / 180) * (distances[i]);
      
+      //Pošiljanje podatkov po serijskem kanalu
       Serial.print("x");
       Serial.print(x);
       Serial.print("\n");
@@ -343,8 +387,8 @@ void calcXY(uint16_t* degrees, uint16_t* distances){
       Serial.print(z);  
       Serial.print("\n");
 
-      //Nesmiselne znake za označevanje podatkov uporabljam, ker sem ob uporabi nekaterih črk dobil error-je
-
+      //Nesmiselni znaki za označevanje podatkov se uporabljajo, ker je prišlo do error-jev pri uporabi nekaterih znakov
+      //Pombno, da se ujemajo z znaki v "saveData.py"
       Serial.print("a");
       Serial.print(E11);
       Serial.print("\n");
@@ -379,6 +423,9 @@ void calcXY(uint16_t* degrees, uint16_t* distances){
 }
 
 //////////////////////////////////////////////////////////////////////////////////
+// Funkcija za razčljenjevanje LIDAR paketov
+// Po razčlenjenju se kliče funkcija calcXY()
+// POodrobnejši opis v delovnem poročilu
 
 void lidar(){
   
@@ -451,6 +498,7 @@ if (HardwareLaser.available()) {
   }
 }
 
+// Funkcija za regulacijo motorja, ki pa se uporablja samo ko LIDAR miruje -> measureState = STATE_1
 void motorRegulator(int refAngle){
 
   int dutyCycle = 60;
@@ -486,23 +534,28 @@ void motorRegulator(int refAngle){
 
 void setup() {
 
+  //Inicializacija serijskih povezav
   Serial.begin(115200);
   HardwareLaser.begin(115200, SERIAL_8N1, LIDAR_TX, -1);
 
+  //Določitev pinov
   pinMode(PIN_BUTTON, INPUT_PULLDOWN);
   pinMode(button, INPUT_PULLDOWN);
   pinMode(MotorPin1, OUTPUT);
   pinMode(MotorPin2, OUTPUT);
   pinMode(enable, OUTPUT);
   
+  // Določitev PWM pina
   ledcSetup(pwmChannel, freq, resolution);
   ledcAttachPin(enable, pwmChannel);
 
+  // Enkoder šteje pulze na pinih 32 in 25-
   ESP32Encoder::useInternalWeakPullResistors=UP;
-
 	encoder.attachHalfQuad(32, 25);
 	encoder.setCount(0);
 
+  //Lastnosti Timer Interupt funkcije
+  // Narejen po primeru "https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/"
   timer = timerBegin(0, 80, true);
   timerAttachInterrupt(timer, &onTimer, true);
   timerAlarmWrite(timer, 1000, true);
@@ -519,7 +572,9 @@ void loop(){
 
   button_state = digitalRead(button);
 
- if(button_state == LOW){ // V mojem primeru uporabljam NC stikalo
+
+ // Ob pritisku na button, preidemo v stanje "measure"
+ if(button_state == LOW){
       measure = true;
     }
 
@@ -528,18 +583,30 @@ void loop(){
   
   delay(1000);
 
+  //Definirana dva stanja
   switch (measureState)
     {
+      // STATE_0 
       case STATE_0:
+        // Inicializiramo števec pulzov
         encoder.setCount(0);
 
-        while(dataCounter < 1000){ // Število paketov, ki jih želimo prebrati
+        // Določimo željeno število prebranih paketov -> dataCounter
+        while(dataCounter < 1000){
+          // LIDAR se začne premikati (Timer Iterupt funkcija)
           startMove = true;
+
+          // Začne se razčlenjevanje paketov ter računanje koordinat in členov matrik, ter pošiljanje po serijskem kanalu
           lidar();
         }
+
+        //Ustavimo premikanje
         startMove = false;
         measureState = STATE_1;
       
+      // Sistem miruje
+      // dataCounter se ponastavi
+      // čakamo na ponoven pritisk button
       case STATE_1:
         motorRegulator(0);
         digitalWrite(MotorPin1, HIGH);

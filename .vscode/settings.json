@@ -1,7 +1,8 @@
 {
     "files.associations": {
         "istream": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "optional": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

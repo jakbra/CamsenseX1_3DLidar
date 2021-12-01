@@ -31,6 +31,9 @@ mu =[]
 with open('data.csv', 'r') as csvfile:
     datareader = csv.reader(csvfile,delimiter=',')
     for row in datareader:
+        # Preberemo csv datoteko
+        # dobimo sezname x,y,z
+        # ter seznam členov kovariančne matrike po vrsticah Ex,Ey,Ez
         x.append(int(float(row[0])))
         y.append(int(float(row[1])))
         z.append(-int(float(row[2])))
@@ -80,13 +83,11 @@ ax.view_init(elev=44, azim=9)
 plt.xlabel('x')
 plt.ylabel('y')
 
+
 color = list()
-
-
 for elem in z:
     color.append(-elem)
 
 ax.scatter3D(x, y, z, c = color,  cmap='winter')
-
 
 plt.show()

@@ -1,12 +1,8 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.animation as animation
 import serial
-import struct
 from tempfile import TemporaryFile
 import csv
 import pandas as pd
+
 
 ser = serial.Serial(
     port='COM3',
@@ -33,12 +29,17 @@ ezx = []
 ezy = []
 ezz = []
 
-while len(z_vals) < 16000:
+# Dokler ni v seznamu vseh podatkov (dataCounter * 8) - Beremo iz serijske povezave
+while len(z_vals) < 8000:
+
+    # Preberemo vratico in jo dekodiramo 
     tmp = ser.readline()
     tmp = tmp.decode('ascii')
     try:
+        # Prvi znak v vrstici nam pove za kater podatek gre
         tip = tmp[0]
-
+        
+        # Vse kar pride za prvim znakom je podatek (tmp[1:])
         if tip == 'x':
             x = int(float(tmp[1:]))
             x_vals.append(x)
@@ -80,12 +81,15 @@ while len(z_vals) < 16000:
             ezz.append(e33)
 
 
-        
+    # Preden LIDAR začne pošiljat pakete, prihaja do errorjev
+    # ze lepši prikaz samo izpišemo vrsto errorja    
     except IndexError:
         print("IE")
     except UnicodeDecodeError:
         print("UDE")
 
+
+# Podatke zdruzimo in jih shranimo v csv datoteko
 rows = zip(x_vals,y_vals,z_vals,exx,exy,exz,eyx,eyy,eyz,ezx,ezy,ezz)
 
 with open('data.csv', "w") as f:
