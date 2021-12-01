@@ -271,7 +271,7 @@ void calcXY(uint16_t* degrees, uint16_t* distances){
       if(distances[i]<=525){
         int16_t e;
         e = -0.281;
-        distances[i] = distances[i]-e; //Pristranskost odčtejemo od meritve
+        distances[i] = distances[i]-e; //Pristranskost odštejemo od meritve
         var_r = 0.8842;
       }
 
@@ -279,7 +279,7 @@ void calcXY(uint16_t* degrees, uint16_t* distances){
       if(distances[i]<=1010){
         int16_t e;
         e = -0.0014*distances[i] + 0.4720; //Enačba premice
-        distances[i] = distances[i]-e; //Pristranskost odčtejemo od meritve
+        distances[i] = distances[i]-e; //Pristranskost odštejemo od meritve
         var_r = 0.0058*distances[i] - 2.1505; //Enačba premice
       }
 
@@ -358,7 +358,7 @@ void calcXY(uint16_t* degrees, uint16_t* distances){
       // 15 pulzov je 10 stopinj 10/15 = 0,66
       theta = (int32_t)encoder.getCount() * 0.66; 
     
-      // Izračun členoc kovariančne matrike
+      // Izračun členov kovariančne matrike
       int E11 = var_phi*sq(distances[i])*sq(-sin((1.f * PI * degrees[i]) / 180)) + var_r*sq(cos((1.f * PI * degrees[i]) / 180));
       int E12 = - var_phi*sin((1.f * PI * degrees[i]) / 180)*cos((1.f * PI * degrees[i]) / 180) + var_r*sin((1.f * PI * degrees[i]) / 180)*cos((1.f * PI * degrees[i]) / 180);
       int E13 = var_r*sin((1.f * PI * theta) / 180)*cos((1.f * PI * degrees[i]) / 180);
@@ -376,7 +376,7 @@ void calcXY(uint16_t* degrees, uint16_t* distances){
       y = sin((1.f * PI * degrees[i]) / 180) * (distances[i]);
       z = -sin((1.f * PI * theta) / 180) * (distances[i]);
      
-      //Pošiljanje podatkov po serijskem kanalu
+      // Pošiljanje podatkov po serijskem kanalu
       Serial.print("x");
       Serial.print(x);
       Serial.print("\n");
@@ -387,8 +387,8 @@ void calcXY(uint16_t* degrees, uint16_t* distances){
       Serial.print(z);  
       Serial.print("\n");
 
-      //Nesmiselni znaki za označevanje podatkov se uporabljajo, ker je prišlo do error-jev pri uporabi nekaterih znakov
-      //Pombno, da se ujemajo z znaki v "saveData.py"
+      // Nesmiselni znaki za označevanje podatkov se uporabljajo, ker je prišlo do error-jev pri uporabi nekaterih znakov
+      // Pombno, da se ujemajo z znaki v "saveData.py"
       Serial.print("a");
       Serial.print(E11);
       Serial.print("\n");
@@ -425,7 +425,7 @@ void calcXY(uint16_t* degrees, uint16_t* distances){
 //////////////////////////////////////////////////////////////////////////////////
 // Funkcija za razčljenjevanje LIDAR paketov
 // Po razčlenjenju se kliče funkcija calcXY()
-// POodrobnejši opis v delovnem poročilu
+// Podrobnejši opis v delovnem poročilu
 
 void lidar(){
   
@@ -534,11 +534,11 @@ void motorRegulator(int refAngle){
 
 void setup() {
 
-  //Inicializacija serijskih povezav
+  // Inicializacija serijskih povezav
   Serial.begin(115200);
   HardwareLaser.begin(115200, SERIAL_8N1, LIDAR_TX, -1);
 
-  //Določitev pinov
+  // Določitev pinov
   pinMode(PIN_BUTTON, INPUT_PULLDOWN);
   pinMode(button, INPUT_PULLDOWN);
   pinMode(MotorPin1, OUTPUT);
@@ -549,12 +549,12 @@ void setup() {
   ledcSetup(pwmChannel, freq, resolution);
   ledcAttachPin(enable, pwmChannel);
 
-  // Enkoder šteje pulze na pinih 32 in 25-
+  // Enkoder šteje pulze na pinih 32 in 25
   ESP32Encoder::useInternalWeakPullResistors=UP;
 	encoder.attachHalfQuad(32, 25);
 	encoder.setCount(0);
 
-  //Lastnosti Timer Interupt funkcije
+  // Lastnosti Timer Interupt funkcije
   // Narejen po primeru "https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/"
   timer = timerBegin(0, 80, true);
   timerAttachInterrupt(timer, &onTimer, true);
@@ -604,10 +604,11 @@ void loop(){
         startMove = false;
         measureState = STATE_1;
       
+      // STATE_1
+      case STATE_1:
       // Sistem miruje
       // dataCounter se ponastavi
       // čakamo na ponoven pritisk button
-      case STATE_1:
         motorRegulator(0);
         digitalWrite(MotorPin1, HIGH);
         digitalWrite(MotorPin2, HIGH);
