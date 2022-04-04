@@ -26,7 +26,7 @@ Run showElips.py to represent each point as an error elipsoid.
 ##Results
   
 <p align="center">
-<img src="./images/ScatterAndElipse.jpg" width="128"/>
+<img src="./images/ScatterAndElipse.png" width="128"/>
 <p align="center">
 
 ## Authors
