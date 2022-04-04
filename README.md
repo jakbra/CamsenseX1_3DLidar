@@ -5,6 +5,8 @@ The goal of this project was to upgrade a low cost 2D LIDAR to a 3D LIDAR system
 ### Error evaluation
 The accuracy of the coordinate measurments (theta, phi, r), was experimentaly measured. The variance of the individual measurmets is used to compute the covariance matrix, which is then represented as an three dimesional confidence elipsoid of the scaned points.
 
+<img src="https://github.com/jakbra/CamsenseX1_3DLidar/images/coordinates.jpg" width="128"/>
+
 ### Executing program
 
 ESP runs the cpp code and is conected to the PC via USB port.
