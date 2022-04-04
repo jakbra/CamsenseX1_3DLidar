@@ -10,7 +10,7 @@ The goal of this project was to upgrade a low cost 2D LIDAR to a 3D LIDAR system
 The accuracy of the coordinate measurments (theta, phi, r), was experimentaly measured. The variance of the individual measurmets is used to compute the covariance matrix, which is then represented as an three dimesional confidence elipsoid of the scaned points.
   
 <p align="center">
-<img src="./images/coordinates.jpg" width="128"/>
+<img src="./images/coordinates.jpg" width="200"/>
 <p align="center">
   
 ### Executing program
@@ -26,7 +26,7 @@ Run showElips.py to represent each point as an error elipsoid.
 ##Results
   
 <p align="center">
-<img src="./images/ScatterAndElipse.png" width="128"/>
+<img src="./images/ScatterAndElipse.png" width="720"/>
 <p align="center">
 
 ## Authors
