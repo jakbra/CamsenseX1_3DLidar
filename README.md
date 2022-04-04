@@ -1,8 +1,6 @@
 # Camsense X1 3D Lidar
 
-## Getting Started
-
-
+The goal of this project was to upgrade a low cost 2D LIDAR to a 3D LIDAR system, using an additional motor. The motor would tilt the LIDAR and knowing the angle of the tilt we can determine the 3-dimensional coordinates of the objects that the LIDAR measures. Such a system requires a special construction, which would be constructed using the LEGO Mindstorm framework. The motor used for tilting is part of the same LEGO framework. A low-cost ESP32 microcontroller is used for controlling the whole system. At the end of the paper the developed system was evaluated and shows promising results despite its cost.
 
 ### Dependencies
 
@@ -10,23 +8,13 @@
 
 ### Executing program
 
-Na mikrokrmilnik se naloži main.cpp. Mikrokrmilnik je preko serijeske povezave povezan na PC.
+ESP runs the cpp code and is conected to the PC via USB port.
+The data from the scan is sent to the PC after PIN 23 activation.
+saveData.py must be running. A csv file (data.csv) is created.
 
-Na PC-ju se zažene saveData.py. 
+Run showPoints.py to plot the points of the scan.
 
-Po začetku meritev (button = PIN 23), mikrokrmilnik začne pošiljati
-podatke.
-
-saveData.py ustvari data.csv
-
-Z showPoints.py preberemo data.csv in prikaženo točke v prostoru.
-
-Z showElips.py preberemo data.csv in prikažno elipse v prostoru.
-
-
-## Help
-
-showElips.py ne deluje hitro. Grafa se po izrisu ne da premikati. (Vsaj na mojem PC-ju)
+Run showElips.py to represent each point as an error elipsoid.
 
 ## Authors
 
@@ -37,10 +25,7 @@ bracun.jakob@gmail.com
 
 ## Acknowledgments
 
-Največji repozitorij:
 * [Vidicon](https://github.com/Vidicon/camsense-X1)
-
-Še nekaj uporabnih repositorijev:
 * [yishii](https://github.com/yishii/LiDAR_Camsense_X1_M5Stack)
 * [j-fujimoto](https://github.com/j-fujimoto/CamsenseX1)
 * [roundsToThree](https://github.com/roundsToThree/Camsense-X1-Previewer)
