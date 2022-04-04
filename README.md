@@ -2,9 +2,10 @@
 
 The goal of this project was to upgrade a low cost 2D LIDAR to a 3D LIDAR system, using an additional motor. The motor would tilt the LIDAR and knowing the angle of the tilt we can determine the 3-dimensional coordinates of the objects that the LIDAR measures. Such a system requires a special construction, which would be constructed using the LEGO Mindstorm framework. The motor used for tilting is part of the same LEGO framework. A low-cost ESP32 microcontroller is used for controlling the whole system. At the end of the paper the developed system was evaluated and shows promising results despite its cost.
 
-### Dependencies
+### Error evaluation
+The accuracy of the coordinate measurments (theta, phi, r), was experimentaly measured. The variance of the individual measurmets is used to compute the covariance matrix, which is then represented as an three dimesional confidence elipsoid of the scaned points.
 
-* ESP32Encoder.h https://github.com/madhephaestus/ESP32Encoder
+<img src="https://github.com/jakbra/CamsenseX1_3DLidar/images/coordinates.jpg" width="128"/>
 
 ### Executing program
 
